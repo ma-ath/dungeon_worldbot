@@ -9,10 +9,10 @@ Apesar da função principal conter a implementação específica para o jogo qu
 
 
 
-デンジャラス・ワールドＲＰＧのためにＣ＋＋で作ったテレグラムのボットです。このボットは僕の友達と一緒にプレイするのため特に作ったされました。
+ダンジョン・ワールドＲＰＧのためにＣ＋＋で作ったテレグラムのボットです。このボットは僕の友達と一緒にプレイするのため特に作ったされました。
 
 このボットはlibtelegramとboostのライブラリを使います。libtelegramの「exemplo_echo」に基づいて作られました。
 このボットをコンパイルするのため、最も簡単な方法はlibtelegramの「exemplo_echo」を代用して、ターミナルで次のコマンドを実行します：
   make TARGET=example_echo
 
-それにmain.cppのファイルは僕がプレイしているゲームのため特に作ったのに、dungeon.hppのファイルが簡単に理解できて一般的だといいんですが。ほかのＲＰＧゲームはこのＣ＋＋ライブラリが使えるといいですね。進行中...
+進行中...
