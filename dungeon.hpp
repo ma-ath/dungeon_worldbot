@@ -355,6 +355,7 @@ class Personagem{
 		INT("Inteligencia"),
 		SAB("Sabedoria"),
 		CAR("Carisma"),
+		Ouro("Ouro"),
 		equipamento(),
 		movimento("")
 			{}
@@ -393,6 +394,7 @@ class Personagem{
 		Atributo <int> INT;
 		Atributo <int> SAB;
 		Atributo <int> CAR;
+		Atributo <int> Ouro;
 
 		Equipamento equipamento;
 		Movimento movimento;

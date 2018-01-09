@@ -6,9 +6,10 @@
 
 #define _DEV			//Seta o bot no modo de desenvolvimento. Assim, o bot que responde é o bot de desenvolvimento
 
-const string _SPATE_CARACTER("澱");
+const string _CARACTER_DE_ESPACO("澱");
 const string _BOT_TOKEN("542711812:AAE51OjKUSU1y1-Gc37gsBno7MezXf7E1mI");
 const string _DEV_TOKEN("492800369:AAH8nOKTMmHjy8Q9zt5SQ-aCzGdCnFn8UTQ");
+const int 	 _ERRO_NUMERO = -17237882;		//Um numero qualquer
 
 using namespace std;
 
@@ -16,7 +17,7 @@ void salvarPersonagem (Personagem&);
 int carregarPersonagem (Personagem&);
 void setStatusInicial(Personagem&);
 inline int getNumero(string);
-inline int getTextoEquip(string,string&,int&,string&);
+inline int getTextoEquip(string,string&,int&,int&,string&);
 inline int getTextoEquip(string,string&);
 
 int main()
@@ -71,7 +72,7 @@ int main()
 	if(message.text && (*message.text == "/ajuda" || *message.text == "/ajuda@dungeon_worldbot"))
 		{
       		sender.send_message(message.chat.id,
-				"Não posso te ajudar na quest, mas é assim que eu funciono\n\"/personagem\" - exibe ficha básica\n\"/personagem stats\" - exibe os stats do personagem\n\"/personagem equip\" - exibe inventario do personagem\n\"/personagem mov\" - exibe movimentos iniciais do personagem\n\"/personagem +[-]xp N\" - adiciona[retira] N XPs (N entre 0 e 9)\n\"/personagem +[-]pv N\" - adiciona[retira] N XPs (N entre 0 e 9)\n\"/personagem +[-]equip\" - adiciona um item no inventario do personagem\n"
+				"Não posso te ajudar na quest, mas é assim que eu funciono\n\"/personagem\" - exibe ficha básica\n\"/personagem stats\" - exibe os stats do personagem\n\"/personagem equip\" - exibe inventario do personagem\n\"/personagem mov\" - exibe movimentos iniciais do personagem\n\"/personagem +[-]xp N\" - adiciona[retira] N XPs\n\"/personagem +[-]pv N\" - adiciona[retira] N XPs\n\"/personagem +[-]ouro N\" - adiciona[retira] N Dinheiros\n\"/personagem +[-]equip\" - adiciona um item no inventario do personagem\n\"/personagem STATS= N\" - Faz \"STATS\" do personagem ser igual a N\n\"/personagem STATS(mod)= N\" - Faz o modificador de \"STATS\" do personagem ser igual a N\n\n(os possíveis \"STATS\" são: FOR,DES,CON,INT,SAB,CAR,Armadura e Dano)"
 			);
     	}
 
@@ -79,7 +80,7 @@ int main()
 	if(message.text && (*message.text == "/sobre"|| *message.text == "/sobre@dungeon_worldbot"))
 		{
       		sender.send_message(message.chat.id,
-				"(7/1/2018)Versão 1.6 - Agora o bot está em uma fase beta de gerenciamento de equipamentos (inventario). São disponibilizados 3 comandos, +equip, -equip e equip. Alem disso, ele ficará 24h por dia ligado, e não mais será ligado e desligado o tempo todo (tenho um servidor rodando em casa)\n\n(6/1/2018)Versão 1.4 - Pequena atualização, agora também está disponível as opções +pv e -pv\n\n(5/1/2018)Versão 1.3 - Agora o bot esta implementado em classes! Pronto para receber novas atualizacoes, que farao todos os parametros serem administrados pelo chat. No momento so a opcao de XP ta aqui para teste\n\n(28/12/2017)Versão 1.0 - Primeira versão! Não tem nada implementado, são só vários textos"
+				"(8/1/2018)Versão 1.7 - Principal mudanca é que foi adicionado controle total a todos os stats de todos os personagens. Esse comando é feito pelo novo comando /personagem STATS=, e funciona para todos os stats listados. Adicionado também dinheiro ao personagem, e o comando /personagem +[-]ouro. Além disso, os comandos de +/-XP e +/-PV agora aceitam quaisquer numeros (nao precisa mais estar limitado entre 0 e 9). Também concertado o stat inicial de carga, que não iniciava em 0.\n\n(7/1/2018)Versão 1.6 - Agora o bot está em uma fase beta de gerenciamento de equipamentos (inventario). São disponibilizados 3 comandos, +equip, -equip e equip. Alem disso, ele ficará 24h por dia ligado, e não mais será ligado e desligado o tempo todo (tenho um servidor rodando em casa)\n\n(6/1/2018)Versão 1.4 - Pequena atualização, agora também está disponível as opções +pv e -pv\n\n(5/1/2018)Versão 1.3 - Agora o bot esta implementado em classes! Pronto para receber novas atualizacoes, que farao todos os parametros serem administrados pelo chat. No momento so a opcao de XP ta aqui para teste\n\n(28/12/2017)Versão 1.0 - Primeira versão! Não tem nada implementado, são só vários textos"
 			);
     	}
 	
@@ -98,7 +99,8 @@ int main()
 				"Nível: "+to_string(Melliandre.Nivel.get())+														+"\n"+
 				"XP: "+to_string(Melliandre.XP.get())+"/"+to_string(Melliandre.Nivel.get()+7)+"(nível atual+7)"		+"\n"+
 				"Carga: "+to_string(Melliandre.Carga.get())+"/"+to_string(Melliandre.Carga.getMax())+"(9+FOR)"		+"\n"+
-				"Raça: "+Melliandre.getRaca()+"(Pode perguntar a história do lugar que visitar)."					+"\n"
+				"Raça: "+Melliandre.getRaca()+"(Pode perguntar a história do lugar que visitar)."					+"\n"+
+				"Ouro: "+to_string(Melliandre.Ouro.get())															+"\n"
 			);
     	}
 
@@ -113,7 +115,9 @@ int main()
 				"Nível: "+to_string(Hyggorth.Nivel.get())+															+"\n"+
 				"XP: "+to_string(Hyggorth.XP.get())+"/"+to_string(Hyggorth.Nivel.get()+7)+"(nível atual+7)"			+"\n"+
 				"Carga: "+to_string(Hyggorth.Carga.get())+"/"+to_string(Hyggorth.Carga.getMax())+"(9+FOR)"			+"\n"+
-				"Raça: "+Hyggorth.getRaca()+"(Pode se transformar em qualquer animal da floresta)."					+"\n"
+				"Raça: "+Hyggorth.getRaca()+"(Pode se transformar em qualquer animal da floresta)."					+"\n"+
+				"Ouro: "+to_string(Hyggorth.Ouro.get())																+"\n"
+
 			);
     	}
 
@@ -128,7 +132,9 @@ int main()
 				"Nível: "+to_string(Violetta.Nivel.get())+															+"\n"+
 				"XP: "+to_string(Violetta.XP.get())+"/"+to_string(Violetta.Nivel.get()+7)+"(nível atual+7)"			+"\n"+
 				"Carga: "+to_string(Violetta.Carga.get())+"/"+to_string(Violetta.Carga.getMax())+"(9+FOR)"			+"\n"+
-				"Raça: "+Violetta.getRaca()+"(Sabe usar um feitiço de clérigo: falar com mortos)."					+"\n"
+				"Raça: "+Violetta.getRaca()+"(Sabe usar um feitiço de clérigo: falar com mortos)."					+"\n"+
+				"Ouro: "+to_string(Violetta.Ouro.get())																+"\n"
+
 			);
     	}		
 
@@ -143,7 +149,9 @@ int main()
 				"Nível: "+to_string(Dominnus.Nivel.get())+																	+"\n"+
 				"XP: "+to_string(Dominnus.XP.get())+"/"+to_string(Dominnus.Nivel.get()+7)+"(nível atual+7)"					+"\n"+
 				"Carga: "+to_string(Dominnus.Carga.get())+"/"+to_string(Dominnus.Carga.getMax())+"(9+FOR)"					+"\n"+
-				"Raça: "+Dominnus.getRaca()+"(Pode descobrir se há algo maligno nas redondezas através de uma oração)."		+"\n"
+				"Raça: "+Dominnus.getRaca()+"(Pode descobrir se há algo maligno nas redondezas através de uma oração)."		+"\n"+
+				"Ouro: "+to_string(Dominnus.Ouro.get())																		+"\n"
+
 			);
     	}
 	//---------------------------------------------------------------------------------------------------------------------------//
@@ -157,7 +165,7 @@ int main()
 				"DES: "+ to_string(Melliandre.DES.get())+"("+to_string(Melliandre.DES.getMod())+")"						+"\n"+
 				"CON: "+ to_string(Melliandre.CON.get())+"("+to_string(Melliandre.CON.getMod())+")"						+"\n"+	
 				"INT: "+ to_string(Melliandre.INT.get())+"("+to_string(Melliandre.INT.getMod())+")"						+"\n"+
-				"SAB:d"+ to_string(Melliandre.SAB.get())+"("+to_string(Melliandre.SAB.getMod())+")"						+"\n"+
+				"SAB: "+ to_string(Melliandre.SAB.get())+"("+to_string(Melliandre.SAB.getMod())+")"						+"\n"+
 				"CAR: "+ to_string(Melliandre.CAR.get())+"("+to_string(Melliandre.CAR.getMod())+")"						+"\n"
 			);
     	}
@@ -169,7 +177,7 @@ int main()
 				"DES: "+ to_string(Hyggorth.DES.get())+"("+to_string(Hyggorth.DES.getMod())+")"							+"\n"+
 				"CON: "+ to_string(Hyggorth.CON.get())+"("+to_string(Hyggorth.CON.getMod())+")"							+"\n"+	
 				"INT: "+ to_string(Hyggorth.INT.get())+"("+to_string(Hyggorth.INT.getMod())+")"							+"\n"+
-				"SAB:d"+ to_string(Hyggorth.SAB.get())+"("+to_string(Hyggorth.SAB.getMod())+")"							+"\n"+
+				"SAB: "+ to_string(Hyggorth.SAB.get())+"("+to_string(Hyggorth.SAB.getMod())+")"							+"\n"+
 				"CAR: "+ to_string(Hyggorth.CAR.get())+"("+to_string(Hyggorth.CAR.getMod())+")"							+"\n"
 			);
     	}
@@ -181,7 +189,7 @@ int main()
 				"DES: "+ to_string(Violetta.DES.get())+"("+to_string(Violetta.DES.getMod())+")"							+"\n"+
 				"CON: "+ to_string(Violetta.CON.get())+"("+to_string(Violetta.CON.getMod())+")"							+"\n"+	
 				"INT: "+ to_string(Violetta.INT.get())+"("+to_string(Violetta.INT.getMod())+")"							+"\n"+
-				"SAB:d"+ to_string(Violetta.SAB.get())+"("+to_string(Violetta.SAB.getMod())+")"							+"\n"+
+				"SAB: "+ to_string(Violetta.SAB.get())+"("+to_string(Violetta.SAB.getMod())+")"							+"\n"+
 				"CAR: "+ to_string(Violetta.CAR.get())+"("+to_string(Violetta.CAR.getMod())+")"							+"\n"
 			);
     	}
@@ -193,7 +201,7 @@ int main()
 				"DES: "+ to_string(Dominnus.DES.get())+"("+to_string(Dominnus.DES.getMod())+")"							+"\n"+
 				"CON: "+ to_string(Dominnus.CON.get())+"("+to_string(Dominnus.CON.getMod())+")"							+"\n"+	
 				"INT: "+ to_string(Dominnus.INT.get())+"("+to_string(Dominnus.INT.getMod())+")"							+"\n"+
-				"SAB:d"+ to_string(Dominnus.SAB.get())+"("+to_string(Dominnus.SAB.getMod())+")"							+"\n"+
+				"SAB: "+ to_string(Dominnus.SAB.get())+"("+to_string(Dominnus.SAB.getMod())+")"							+"\n"+
 				"CAR: "+ to_string(Dominnus.CAR.get())+"("+to_string(Dominnus.CAR.getMod())+")"							+"\n"
 			);
     	}
@@ -208,21 +216,20 @@ int main()
 		((*message.text).find("/melliandre@dungeon_worldbot +xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Melliandre.XP.set(Melliandre.XP.get()+getNumero(*message.text));
-					if ((Melliandre.Nivel.get()+7) <= Melliandre.XP.get())		//Se eu ter xp suficiente para subir de nivel
-					{
-						Melliandre.Nivel.set(Melliandre.Nivel.get()+1);
-						Melliandre.XP.set(Melliandre.XP.get()-(Melliandre.Nivel.get()+7-1));
-						sender.send_message(message.chat.id,Melliandre.getNome()+" subiu de Nível! Nível "+to_string(Melliandre.Nivel.get())+"\n");		
-					}
-					else
-					{
-						sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Melliandre.getNome() +"\n");
-					}
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Melliandre.getNome() +"\n");
+
+				while((Melliandre.Nivel.get()+7) <= Melliandre.XP.get())				//Se eu ter xp suficiente para subir de nivel
+				{
+					Melliandre.Nivel.set(Melliandre.Nivel.get()+1);
+					Melliandre.XP.set(Melliandre.XP.get()-(Melliandre.Nivel.get()+7-1));
+					sender.send_message(message.chat.id,Melliandre.getNome()+" subiu de Nível! Nível "+to_string(Melliandre.Nivel.get())+"\n");		
+				}
+
 				salvarPersonagem(Melliandre);
 			}				
     	}	
@@ -232,20 +239,18 @@ int main()
 		((*message.text).find("/hyggorth@dungeon_worldbot +xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Hyggorth.XP.set(Hyggorth.XP.get()+getNumero(*message.text));
-					if ((Hyggorth.Nivel.get()+7) <= Hyggorth.XP.get())
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Hyggorth.getNome() +"\n");
+
+					while((Hyggorth.Nivel.get()+7) <= Hyggorth.XP.get())
 					{
 						Hyggorth.Nivel.set(Hyggorth.Nivel.get()+1);
 						Hyggorth.XP.set(Hyggorth.XP.get()-(Hyggorth.Nivel.get()+7-1));
 						sender.send_message(message.chat.id,Hyggorth.getNome()+" subiu de Nível! Nível "+to_string(Hyggorth.Nivel.get())+"\n");		
-					}
-					else
-					{
-						sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Hyggorth.getNome() +"\n");
 					}
 				salvarPersonagem(Hyggorth);
 			}				
@@ -256,20 +261,18 @@ int main()
 		((*message.text).find("/violetta@dungeon_worldbot +xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Violetta.XP.set(Violetta.XP.get()+getNumero(*message.text));
-					if ((Violetta.Nivel.get()+7) <= Violetta.XP.get())
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Violetta.getNome() +"\n");
+
+					while((Violetta.Nivel.get()+7) <= Violetta.XP.get())
 					{
 						Violetta.Nivel.set(Violetta.Nivel.get()+1);
 						Violetta.XP.set(Violetta.XP.get()-(Violetta.Nivel.get()+7-1));
 						sender.send_message(message.chat.id,Violetta.getNome()+" subiu de Nível! Nível "+to_string(Violetta.Nivel.get())+"\n");		
-					}
-					else
-					{
-						sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Violetta.getNome() +"\n");
 					}
 				salvarPersonagem(Violetta);
 			}				
@@ -280,20 +283,17 @@ int main()
 		((*message.text).find("/dominnus@dungeon_worldbot +xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Dominnus.XP.set(Dominnus.XP.get()+getNumero(*message.text));
-					if ((Dominnus.Nivel.get()+7) <= Dominnus.XP.get())
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Dominnus.getNome() +"\n");
+					while((Dominnus.Nivel.get()+7) <= Dominnus.XP.get())
 					{
 						Dominnus.Nivel.set(Dominnus.Nivel.get()+1);
 						Dominnus.XP.set(Dominnus.XP.get()-(Dominnus.Nivel.get()+7-1));
 						sender.send_message(message.chat.id,Dominnus.getNome()+" subiu de Nível! Nível "+to_string(Dominnus.Nivel.get())+"\n");		
-					}
-					else
-					{
-						sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"XP para " + Dominnus.getNome() +"\n");
 					}
 				salvarPersonagem(Dominnus);
 			}				
@@ -304,13 +304,15 @@ int main()
 		((*message.text).find("/melliandre@dungeon_worldbot -xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
-				Melliandre.XP.set(Melliandre.XP.get()-getNumero(*message.text));			
-				if (Melliandre.XP.get() < 0)								//Se eu perder xp demais...
+				Melliandre.XP.set(Melliandre.XP.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Melliandre.getNome() +"\n");
+			
+				while(Melliandre.XP.get() < 0)								//Se eu perder xp demais...
 				{
 					if (Melliandre.Nivel.get() > 1)							//& meu nivel for maior que 1
 					{
@@ -325,10 +327,6 @@ int main()
 						Melliandre.XP.set(0);			//se nao apenas perco todo xp (nunca fica negativo)
 					}
 				}
-				else
-				{
-					sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Melliandre.getNome() +"\n");
-				}
 				salvarPersonagem(Melliandre);
 			}
 		}
@@ -338,13 +336,15 @@ int main()
 		((*message.text).find("/hyggorth@dungeon_worldbot -xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
-				Hyggorth.XP.set(Hyggorth.XP.get()-getNumero(*message.text));			
-				if (Hyggorth.XP.get() < 0)								//Se eu perder xp demais...
+				Hyggorth.XP.set(Hyggorth.XP.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Hyggorth.getNome() +"\n");
+			
+				while(Hyggorth.XP.get() < 0)								//Se eu perder xp demais...
 				{
 					if (Hyggorth.Nivel.get() > 1)							//& meu nivel for maior que 1
 					{
@@ -359,10 +359,6 @@ int main()
 						Hyggorth.XP.set(0);			//se nao apenas perco todo xp (nunca fica negativo)
 					}
 				}
-				else
-				{
-					sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Hyggorth.getNome() +"\n");
-				}
 				salvarPersonagem(Hyggorth);
 			}
 		}
@@ -372,13 +368,15 @@ int main()
 		((*message.text).find("/violetta@dungeon_worldbot -xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
-				Violetta.XP.set(Violetta.XP.get()-getNumero(*message.text));			
-				if (Violetta.XP.get() < 0)								//Se eu perder xp demais...
+				Violetta.XP.set(Violetta.XP.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Violetta.getNome() +"\n");
+			
+				while(Violetta.XP.get() < 0)								//Se eu perder xp demais...
 				{
 					if (Violetta.Nivel.get() > 1)							//& meu nivel for maior que 1
 					{
@@ -393,10 +391,6 @@ int main()
 						Violetta.XP.set(0);			//se nao apenas perco todo xp (nunca fica negativo)
 					}
 				}
-				else
-				{
-					sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Violetta.getNome() +"\n");
-				}
 				salvarPersonagem(Violetta);
 			}
 		}
@@ -406,13 +400,15 @@ int main()
 		((*message.text).find("/dominnus@dungeon_worldbot -xp") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
-				Dominnus.XP.set(Dominnus.XP.get()-getNumero(*message.text));			
-				if (Dominnus.XP.get() < 0)								//Se eu perder xp demais...
+				Dominnus.XP.set(Dominnus.XP.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Dominnus.getNome() +"\n");
+			
+				while(Dominnus.XP.get() < 0)								//Se eu perder xp demais...
 				{
 					if (Dominnus.Nivel.get() > 1)							//& meu nivel for maior que 1
 					{
@@ -427,10 +423,6 @@ int main()
 						Dominnus.XP.set(0);			//se nao apenas perco todo xp (nunca fica negativo)
 					}
 				}
-				else
-				{
-					sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"XP para " + Dominnus.getNome() +"\n");
-				}
 				salvarPersonagem(Dominnus);
 			}
 		}
@@ -444,8 +436,8 @@ int main()
 		((*message.text).find("/melliandre@dungeon_worldbot +pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Melliandre.PV.set(Melliandre.PV.get()+getNumero(*message.text));
@@ -470,8 +462,8 @@ int main()
 		((*message.text).find("/hyggorth@dungeon_worldbot +pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Hyggorth.PV.set(Hyggorth.PV.get()+getNumero(*message.text));
@@ -496,8 +488,8 @@ int main()
 		((*message.text).find("/violetta@dungeon_worldbot +pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Violetta.PV.set(Violetta.PV.get()+getNumero(*message.text));
@@ -522,8 +514,8 @@ int main()
 		((*message.text).find("/dominnus@dungeon_worldbot +pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 				Dominnus.PV.set(Dominnus.PV.get()+getNumero(*message.text));
@@ -548,8 +540,8 @@ int main()
 		((*message.text).find("/melliandre@dungeon_worldbot -pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
@@ -572,8 +564,8 @@ int main()
 		((*message.text).find("/hyggorth@dungeon_worldbot -pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
@@ -596,8 +588,8 @@ int main()
 		((*message.text).find("/violetta@dungeon_worldbot -pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
@@ -620,8 +612,8 @@ int main()
 		((*message.text).find("/dominnus@dungeon_worldbot -pv") != string::npos)
 		)
 		{
-			if(getNumero(*message.text) == -1)
-				sender.send_message(message.chat.id,"Digite um numero de 0 a 9\n");
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
 			else
 			{
 
@@ -639,9 +631,134 @@ int main()
 			}
 		}
 
+	  if(
+		((*message.text).find("/melliandre +ouro") != string::npos)						||
+		((*message.text).find("/mel +ouro") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot +ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Melliandre.Ouro.set(Melliandre.Ouro.get()+getNumero(*message.text));
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"Ouro para " + Melliandre.getNome() +"\n");
 
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+	  if(
+		((*message.text).find("/melliandre -ouro") != string::npos)						||
+		((*message.text).find("/mel -ouro") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot -ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Melliandre.Ouro.set(Melliandre.Ouro.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"Ouro para " + Melliandre.getNome() +"\n");
 
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+	  if(
+		((*message.text).find("/hyggorth +ouro") != string::npos)						||
+		((*message.text).find("/hyg +ouro") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot +ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Hyggorth.Ouro.set(Hyggorth.Ouro.get()+getNumero(*message.text));
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"Ouro para " + Hyggorth.getNome() +"\n");
 
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+	  if(
+		((*message.text).find("/hyggorth -ouro") != string::npos)						||
+		((*message.text).find("/hyg -ouro") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot -ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Hyggorth.Ouro.set(Hyggorth.Ouro.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"Ouro para " + Hyggorth.getNome() +"\n");
+
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+	  if(
+		((*message.text).find("/violetta +ouro") != string::npos)						||
+		((*message.text).find("/vio +ouro") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot +ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Violetta.Ouro.set(Violetta.Ouro.get()+getNumero(*message.text));
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"Ouro para " + Violetta.getNome() +"\n");
+
+				salvarPersonagem(Violetta);
+			}				
+    	}
+	  if(
+		((*message.text).find("/violetta -ouro") != string::npos)						||
+		((*message.text).find("/vio -ouro") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot -ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Violetta.Ouro.set(Violetta.Ouro.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"Ouro para " + Violetta.getNome() +"\n");
+
+				salvarPersonagem(Violetta);
+			}				
+    	}
+	  if(
+		((*message.text).find("/dominnus +ouro") != string::npos)						||
+		((*message.text).find("/dom +ouro") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot +ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Dominnus.Ouro.set(Dominnus.Ouro.get()+getNumero(*message.text));
+				sender.send_message(message.chat.id,"+"+to_string(getNumero(*message.text))+"Ouro para " + Dominnus.getNome() +"\n");
+
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+	  if(
+		((*message.text).find("/dominnus -ouro") != string::npos)						||
+		((*message.text).find("/dom -ouro") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot -ouro") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem +[-]funcao\nNumero\n");
+			else
+			{
+				Dominnus.Ouro.set(Dominnus.Ouro.get()-getNumero(*message.text));
+				sender.send_message(message.chat.id,"-"+to_string(getNumero(*message.text))+"Ouro para " + Dominnus.getNome() +"\n");
+
+				salvarPersonagem(Dominnus);
+			}				
+    	}
 	
 	//---------------------------------------------------------------------------------------------------------------------------//
 
@@ -657,17 +774,18 @@ int main()
 		{
 			string nome;
 			int peso;
+			int quantidade;
 			string descricao;
-			if (getTextoEquip(*message.text,nome,peso,descricao) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nDescricao\n");
+			if (getTextoEquip(*message.text,nome,peso,quantidade,descricao) != 0)
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nQuantidade (apenas numeros)\nDescricao\n");
 			else
 			{
 				if (Melliandre.Carga.get()+peso > Melliandre.Carga.getMax())
 						sender.send_message(message.chat.id,Melliandre.getNome()+" não pode carregar esse equipamento (Excede limite de carga)\n");
 				else
 				{   
-					boost::replace_all(nome, " ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
-					boost::replace_all(descricao, " ",_SPATE_CARACTER);		//
+					boost::replace_all(nome, " ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
+					boost::replace_all(descricao, " ",_CARACTER_DE_ESPACO);		//
 
 					Item *item = new Item(nome,peso);
 					item->setDescricao(descricao);
@@ -675,7 +793,19 @@ int main()
 					if(Melliandre.equipamento.adicionarEquipamento(*item) != 0)
 						sender.send_message(message.chat.id,Melliandre.getNome()+" já possui esse item\n");
 					else
+					{
 						Melliandre.Carga.set(Melliandre.Carga.get()+peso);
+						try{
+							Melliandre.equipamento.acessarItemNome(nome).setQuantidade(quantidade);
+						}
+						catch(...){
+							cout << "Erro Desconhecido\n";
+							sender.send_message(message.chat.id,
+								"Erro deconhecido ao tentar acessar:\nMelliandre.equipamento.acessarItemNome(nome).setQuantidade(quantidade);");
+						}
+						boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
+						sender.send_message(message.chat.id,nome+" adicionado ao inventário\n");
+					}
 				}
 
 			}
@@ -683,24 +813,25 @@ int main()
 			salvarPersonagem(Melliandre);
 		}
 	  if(
-		((*message.text).find("/hyggorth +equip") != string::npos)							||
+		((*message.text).find("/hyggorth +equip") != string::npos)						||
 		((*message.text).find("/hyg +equip") != string::npos)								||
 		((*message.text).find("/hyggorth@dungeon_worldbot +equip") != string::npos)
 		)
 		{
 			string nome;
 			int peso;
+			int quantidade;
 			string descricao;
-			if (getTextoEquip(*message.text,nome,peso,descricao) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nDescricao\n");
+			if (getTextoEquip(*message.text,nome,peso,quantidade,descricao) != 0)
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nQuantidade (apenas numeros)\nDescricao\n");
 			else
 			{
 				if (Hyggorth.Carga.get()+peso > Hyggorth.Carga.getMax())
 						sender.send_message(message.chat.id,Hyggorth.getNome()+" não pode carregar esse equipamento (Excede limite de carga)\n");
 				else
 				{   
-					boost::replace_all(nome, " ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
-					boost::replace_all(descricao, " ",_SPATE_CARACTER);		//
+					boost::replace_all(nome, " ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
+					boost::replace_all(descricao, " ",_CARACTER_DE_ESPACO);		//
 
 					Item *item = new Item(nome,peso);
 					item->setDescricao(descricao);
@@ -708,7 +839,19 @@ int main()
 					if(Hyggorth.equipamento.adicionarEquipamento(*item) != 0)
 						sender.send_message(message.chat.id,Hyggorth.getNome()+" já possui esse item\n");
 					else
+					{
 						Hyggorth.Carga.set(Hyggorth.Carga.get()+peso);
+						try{
+							Hyggorth.equipamento.acessarItemNome(nome).setQuantidade(quantidade);
+						}
+						catch(...){
+							cout << "Erro Desconhecido\n";
+							sender.send_message(message.chat.id,
+								"Erro deconhecido ao tentar acessar:\nHyggorth.equipamento.acessarItemNome(nome).setQuantidade(quantidade);");
+						}
+						boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
+						sender.send_message(message.chat.id,nome+" adicionado ao inventário\n");
+					}
 				}
 
 			}
@@ -716,24 +859,25 @@ int main()
 			salvarPersonagem(Hyggorth);
 		}
 	  if(
-		((*message.text).find("/violetta +equip") != string::npos)							||
+		((*message.text).find("/violetta +equip") != string::npos)						||
 		((*message.text).find("/vio +equip") != string::npos)								||
 		((*message.text).find("/violetta@dungeon_worldbot +equip") != string::npos)
 		)
 		{
 			string nome;
 			int peso;
+			int quantidade;
 			string descricao;
-			if (getTextoEquip(*message.text,nome,peso,descricao) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nDescricao\n");
+			if (getTextoEquip(*message.text,nome,peso,quantidade,descricao) != 0)
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nQuantidade (apenas numeros)\nDescricao\n");
 			else
 			{
 				if (Violetta.Carga.get()+peso > Violetta.Carga.getMax())
 						sender.send_message(message.chat.id,Violetta.getNome()+" não pode carregar esse equipamento (Excede limite de carga)\n");
 				else
 				{   
-					boost::replace_all(nome, " ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
-					boost::replace_all(descricao, " ",_SPATE_CARACTER);		//
+					boost::replace_all(nome, " ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
+					boost::replace_all(descricao, " ",_CARACTER_DE_ESPACO);		//
 
 					Item *item = new Item(nome,peso);
 					item->setDescricao(descricao);
@@ -741,7 +885,19 @@ int main()
 					if(Violetta.equipamento.adicionarEquipamento(*item) != 0)
 						sender.send_message(message.chat.id,Violetta.getNome()+" já possui esse item\n");
 					else
+					{
 						Violetta.Carga.set(Violetta.Carga.get()+peso);
+						try{
+							Violetta.equipamento.acessarItemNome(nome).setQuantidade(quantidade);
+						}
+						catch(...){
+							cout << "Erro Desconhecido\n";
+							sender.send_message(message.chat.id,
+								"Erro deconhecido ao tentar acessar:\nVioletta.equipamento.acessarItemNome(nome).setQuantidade(quantidade);");
+						}
+						boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
+						sender.send_message(message.chat.id,nome+" adicionado ao inventário\n");
+					}
 				}
 
 			}
@@ -749,24 +905,25 @@ int main()
 			salvarPersonagem(Violetta);
 		}
 	  if(
-		((*message.text).find("/dominnus +equip") != string::npos)							||
+		((*message.text).find("/dominnus +equip") != string::npos)						||
 		((*message.text).find("/dom +equip") != string::npos)								||
 		((*message.text).find("/dominnus@dungeon_worldbot +equip") != string::npos)
 		)
 		{
 			string nome;
 			int peso;
+			int quantidade;
 			string descricao;
-			if (getTextoEquip(*message.text,nome,peso,descricao) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nDescricao\n");
+			if (getTextoEquip(*message.text,nome,peso,quantidade,descricao) != 0)
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem +equip\nNome do Equipamento\nPeso do equipamento (apenas numeros)\nQuantidade (apenas numeros)\nDescricao\n");
 			else
 			{
 				if (Dominnus.Carga.get()+peso > Dominnus.Carga.getMax())
 						sender.send_message(message.chat.id,Dominnus.getNome()+" não pode carregar esse equipamento (Excede limite de carga)\n");
 				else
 				{   
-					boost::replace_all(nome, " ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
-					boost::replace_all(descricao, " ",_SPATE_CARACTER);		//
+					boost::replace_all(nome, " ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
+					boost::replace_all(descricao, " ",_CARACTER_DE_ESPACO);		//
 
 					Item *item = new Item(nome,peso);
 					item->setDescricao(descricao);
@@ -774,7 +931,19 @@ int main()
 					if(Dominnus.equipamento.adicionarEquipamento(*item) != 0)
 						sender.send_message(message.chat.id,Dominnus.getNome()+" já possui esse item\n");
 					else
+					{
 						Dominnus.Carga.set(Dominnus.Carga.get()+peso);
+						try{
+							Dominnus.equipamento.acessarItemNome(nome).setQuantidade(quantidade);
+						}
+						catch(...){
+							cout << "Erro Desconhecido\n";
+							sender.send_message(message.chat.id,
+								"Erro deconhecido ao tentar acessar:\nDominnus.equipamento.acessarItemNome(nome).setQuantidade(quantidade);");
+						}
+						boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
+						sender.send_message(message.chat.id,nome+" adicionado ao inventário\n");
+					}
 				}
 
 			}
@@ -792,11 +961,11 @@ int main()
 			int peso;
 
 			if (getTextoEquip(*message.text,nome) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel -equip\nNome do Equipamento a");
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem -equip\nNome do Equipamento a");
 			else
 			{
 
-				boost::replace_all(nome," ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
+				boost::replace_all(nome," ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
 
 				try{
 					peso = Melliandre.equipamento.acessarItemNome(nome).getPeso();
@@ -814,7 +983,7 @@ int main()
 				else
 				{
 					Melliandre.Carga.set(Melliandre.Carga.get()-peso);
-					boost::replace_all(nome,_SPATE_CARACTER," ");
+					boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
 					sender.send_message(message.chat.id,nome+" foi retirado do inventario\n");
 				}
 			}
@@ -831,11 +1000,11 @@ int main()
 			int peso;
 
 			if (getTextoEquip(*message.text,nome) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel -equip\nNome do Equipamento a");
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem -equip\nNome do Equipamento a");
 			else
 			{
 
-				boost::replace_all(nome," ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
+				boost::replace_all(nome," ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
 
 				try{
 					peso = Hyggorth.equipamento.acessarItemNome(nome).getPeso();
@@ -853,7 +1022,7 @@ int main()
 				else
 				{
 					Hyggorth.Carga.set(Hyggorth.Carga.get()-peso);
-					boost::replace_all(nome,_SPATE_CARACTER," ");
+					boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
 					sender.send_message(message.chat.id,nome+" foi retirado do inventario\n");
 				}
 			}
@@ -868,13 +1037,13 @@ int main()
 		{
 			string nome;
 			int peso;
-
+			
 			if (getTextoEquip(*message.text,nome) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel -equip\nNome do Equipamento a");
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem -equip\nNome do Equipamento a");
 			else
 			{
 
-				boost::replace_all(nome," ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
+				boost::replace_all(nome," ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
 
 				try{
 					peso = Violetta.equipamento.acessarItemNome(nome).getPeso();
@@ -892,7 +1061,7 @@ int main()
 				else
 				{
 					Violetta.Carga.set(Violetta.Carga.get()-peso);
-					boost::replace_all(nome,_SPATE_CARACTER," ");
+					boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
 					sender.send_message(message.chat.id,nome+" foi retirado do inventario\n");
 				}
 			}
@@ -909,11 +1078,11 @@ int main()
 			int peso;
 
 			if (getTextoEquip(*message.text,nome) != 0)
-				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/mel -equip\nNome do Equipamento a");
+				sender.send_message(message.chat.id,"Digite algo no formado:\n\n/personagem -equip\nNome do Equipamento a");
 			else
 			{
 
-				boost::replace_all(nome," ",_SPATE_CARACTER);			//As strings que sao salvas em arquivos nao podem ter espaços
+				boost::replace_all(nome," ",_CARACTER_DE_ESPACO);			//As strings que sao salvas em arquivos nao podem ter espaços
 
 				try{
 					peso = Dominnus.equipamento.acessarItemNome(nome).getPeso();
@@ -931,7 +1100,7 @@ int main()
 				else
 				{
 					Dominnus.Carga.set(Dominnus.Carga.get()-peso);
-					boost::replace_all(nome,_SPATE_CARACTER," ");
+					boost::replace_all(nome,_CARACTER_DE_ESPACO," ");
 					sender.send_message(message.chat.id,nome+" foi retirado do inventario\n");
 				}
 			}
@@ -948,15 +1117,15 @@ int main()
 				string nome = Melliandre.equipamento.acessarItemIndice(i).getNome();
 				string descricao = Melliandre.equipamento.acessarItemIndice(i).getDescricao();
 
-				boost::replace_all(nome,_SPATE_CARACTER," ");			//troco o caracter de espaco por " " para exibicao da menssagem
-				boost::replace_all(descricao,_SPATE_CARACTER," ");
+				boost::replace_all(nome,_CARACTER_DE_ESPACO," ");			//troco o caracter de espaco por " " para exibicao da menssagem
+				boost::replace_all(descricao,_CARACTER_DE_ESPACO," ");
 
 				sender.send_message(message.chat.id,
 					"-"+nome+"\n"+
 					+"\tPeso: "+to_string(Melliandre.equipamento.acessarItemIndice(i).getPeso())+"\n"+
 					+"\tQnt: "+to_string(Melliandre.equipamento.acessarItemIndice(i).getQuantidade())+"\n"+
-					+"\tUsos: "+to_string(Melliandre.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Melliandre.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
-					+"\tCondicao: "+to_string(Melliandre.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
+//					+"\tUsos: "+to_string(Melliandre.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Melliandre.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
+//					+"\tCondicao: "+to_string(Melliandre.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
 					+"\t"+descricao+"\n"
 				);
 			}
@@ -970,15 +1139,15 @@ int main()
 				string nome = Hyggorth.equipamento.acessarItemIndice(i).getNome();
 				string descricao = Hyggorth.equipamento.acessarItemIndice(i).getDescricao();
 
-				boost::replace_all(nome,_SPATE_CARACTER," ");			//troco o caracter de espaco por " " para exibicao da menssagem
-				boost::replace_all(descricao,_SPATE_CARACTER," ");
+				boost::replace_all(nome,_CARACTER_DE_ESPACO," ");			//troco o caracter de espaco por " " para exibicao da menssagem
+				boost::replace_all(descricao,_CARACTER_DE_ESPACO," ");
 
 				sender.send_message(message.chat.id,
 					"-"+nome+"\n"+
 					+"\tPeso: "+to_string(Hyggorth.equipamento.acessarItemIndice(i).getPeso())+"\n"+
 					+"\tQnt: "+to_string(Hyggorth.equipamento.acessarItemIndice(i).getQuantidade())+"\n"+
-					+"\tUsos: "+to_string(Hyggorth.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Hyggorth.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
-					+"\tCondicao: "+to_string(Hyggorth.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
+//					+"\tUsos: "+to_string(Hyggorth.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Hyggorth.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
+//					+"\tCondicao: "+to_string(Hyggorth.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
 					+"\t"+descricao+"\n"
 				);
 			}
@@ -992,15 +1161,15 @@ int main()
 				string nome = Violetta.equipamento.acessarItemIndice(i).getNome();
 				string descricao = Violetta.equipamento.acessarItemIndice(i).getDescricao();
 
-				boost::replace_all(nome,_SPATE_CARACTER," ");			//troco o caracter de espaco por " " para exibicao da menssagem
-				boost::replace_all(descricao,_SPATE_CARACTER," ");
+				boost::replace_all(nome,_CARACTER_DE_ESPACO," ");			//troco o caracter de espaco por " " para exibicao da menssagem
+				boost::replace_all(descricao,_CARACTER_DE_ESPACO," ");
 
 				sender.send_message(message.chat.id,
 					"-"+nome+"\n"+
 					+"\tPeso: "+to_string(Violetta.equipamento.acessarItemIndice(i).getPeso())+"\n"+
 					+"\tQnt: "+to_string(Violetta.equipamento.acessarItemIndice(i).getQuantidade())+"\n"+
-					+"\tUsos: "+to_string(Violetta.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Violetta.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
-					+"\tCondicao: "+to_string(Violetta.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
+//					+"\tUsos: "+to_string(Violetta.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Violetta.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
+//					+"\tCondicao: "+to_string(Violetta.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
 					+"\t"+descricao+"\n"
 				);
 			}
@@ -1014,19 +1183,995 @@ int main()
 				string nome = Dominnus.equipamento.acessarItemIndice(i).getNome();
 				string descricao = Dominnus.equipamento.acessarItemIndice(i).getDescricao();
 
-				boost::replace_all(nome,_SPATE_CARACTER," ");			//troco o caracter de espaco por " " para exibicao da menssagem
-				boost::replace_all(descricao,_SPATE_CARACTER," ");
+				boost::replace_all(nome,_CARACTER_DE_ESPACO," ");			//troco o caracter de espaco por " " para exibicao da menssagem
+				boost::replace_all(descricao,_CARACTER_DE_ESPACO," ");
 
 				sender.send_message(message.chat.id,
 					"-"+nome+"\n"+
 					+"\tPeso: "+to_string(Dominnus.equipamento.acessarItemIndice(i).getPeso())+"\n"+
 					+"\tQnt: "+to_string(Dominnus.equipamento.acessarItemIndice(i).getQuantidade())+"\n"+
-					+"\tUsos: "+to_string(Dominnus.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Dominnus.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
-					+"\tCondicao: "+to_string(Dominnus.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
+//					+"\tUsos: "+to_string(Dominnus.equipamento.acessarItemIndice(i).getUso())+"/"+to_string(Dominnus.equipamento.acessarItemIndice(i).getUsoMax())+"\n"+
+//					+"\tCondicao: "+to_string(Dominnus.equipamento.acessarItemIndice(i).getCondicao())+"%\n"+
 					+"\t"+descricao+"\n"
 				);
 			}
     	}
+
+	//---------------------------------------------------------------------------------------------------------------------------//
+
+	//----------------------------------------------------------OUTROS-STATS-----------------------------------------------------//
+
+   	  if(
+		((*message.text).find("/melliandre FOR=") != string::npos)					||
+		((*message.text).find("/mel FOR=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot FOR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.FOR.set(getNumero(*message.text));
+				Melliandre.Carga.setMax(getNumero(*message.text)+9);				//FOR altera carga maxima
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre DES=") != string::npos)					||
+		((*message.text).find("/mel DES=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot DES=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.DES.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre CON=") != string::npos)					||
+		((*message.text).find("/mel CON=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot CON=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.CON.set(getNumero(*message.text));
+				Melliandre.PV.setMax(getNumero(*message.text)+6);			//Altera o PV maximo do personagem
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre INT=") != string::npos)					||
+		((*message.text).find("/mel INT=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot INT=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.INT.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre SAB=") != string::npos)					||
+		((*message.text).find("/mel SAB=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot SAB=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.SAB.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre CAR=") != string::npos)					||
+		((*message.text).find("/mel CAR=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot CAR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.CAR.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre FOR(mod)=") != string::npos)					||
+		((*message.text).find("/mel FOR(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot FOR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.FOR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre DES(mod)=") != string::npos)					||
+		((*message.text).find("/mel DES(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot DES(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.DES.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre CON(mod)=") != string::npos)					||
+		((*message.text).find("/mel CON(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot CON(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.CON.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre INT(mod)=") != string::npos)					||
+		((*message.text).find("/mel INT(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot INT(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.INT.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre SAB(mod)=") != string::npos)					||
+		((*message.text).find("/mel SAB(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot SAB(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.SAB.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/melliandre CAR(mod)=") != string::npos)					||
+		((*message.text).find("/mel CAR(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot CAR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.CAR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth FOR=") != string::npos)					||
+		((*message.text).find("/hyg FOR=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot FOR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.FOR.set(getNumero(*message.text));
+				Hyggorth.Carga.setMax(getNumero(*message.text)+9);					//FOR altera carga maxima
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth DES=") != string::npos)					||
+		((*message.text).find("/hyg DES=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot DES=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.DES.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth CON=") != string::npos)					||
+		((*message.text).find("/hyg CON=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot CON=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.CON.set(getNumero(*message.text));
+				Hyggorth.PV.setMax(getNumero(*message.text)+6);			//Altera o PV maximo do personagem
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth INT=") != string::npos)					||
+		((*message.text).find("/hyg INT=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot INT=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.INT.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth SAB=") != string::npos)					||
+		((*message.text).find("/hyg SAB=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot SAB=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.SAB.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth CAR=") != string::npos)					||
+		((*message.text).find("/hyg CAR=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot CAR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.CAR.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth FOR(mod)=") != string::npos)					||
+		((*message.text).find("/hyg FOR(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot FOR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.FOR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth DES(mod)=") != string::npos)					||
+		((*message.text).find("/hyg DES(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot DES(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.DES.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth CON(mod)=") != string::npos)					||
+		((*message.text).find("/hyg CON(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot CON(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.CON.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth INT(mod)=") != string::npos)					||
+		((*message.text).find("/hyg INT(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot INT(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.INT.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth SAB(mod)=") != string::npos)					||
+		((*message.text).find("/hyg SAB(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot SAB(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.SAB.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/hyggorth CAR(mod)=") != string::npos)					||
+		((*message.text).find("/hyg CAR(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot CAR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.CAR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta FOR=") != string::npos)					||
+		((*message.text).find("/vio FOR=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot FOR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.FOR.set(getNumero(*message.text));
+				Violetta.Carga.setMax(getNumero(*message.text)+9);					//FOR altera carga maxima
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta DES=") != string::npos)					||
+		((*message.text).find("/vio DES=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot DES=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.DES.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta CON=") != string::npos)					||
+		((*message.text).find("/vio CON=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot CON=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.CON.set(getNumero(*message.text));
+				Violetta.PV.setMax(getNumero(*message.text)+6);			//Altera o PV maximo do personagem
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta INT=") != string::npos)					||
+		((*message.text).find("/vio INT=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot INT=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.INT.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta SAB=") != string::npos)					||
+		((*message.text).find("/vio SAB=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot SAB=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.SAB.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta CAR=") != string::npos)					||
+		((*message.text).find("/vio CAR=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot CAR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.CAR.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta FOR(mod)=") != string::npos)					||
+		((*message.text).find("/vio FOR(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot FOR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.FOR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta DES(mod)=") != string::npos)					||
+		((*message.text).find("/vio DES(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot DES(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.DES.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta CON(mod)=") != string::npos)					||
+		((*message.text).find("/vio CON(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot CON(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.CON.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta INT(mod)=") != string::npos)					||
+		((*message.text).find("/vio INT(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot INT(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.INT.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta SAB(mod)=") != string::npos)					||
+		((*message.text).find("/vio SAB(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot SAB(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.SAB.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/violetta CAR(mod)=") != string::npos)					||
+		((*message.text).find("/vio CAR(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot CAR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.CAR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus FOR=") != string::npos)					||
+		((*message.text).find("/dom FOR=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot FOR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.FOR.set(getNumero(*message.text));
+				Dominnus.Carga.setMax(getNumero(*message.text)+9);					//FOR altera carga maxima
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus DES=") != string::npos)					||
+		((*message.text).find("/dom DES=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot DES=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.DES.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus CON=") != string::npos)					||
+		((*message.text).find("/dom CON=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot CON=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.CON.set(getNumero(*message.text));
+				Dominnus.PV.setMax(getNumero(*message.text)+6);			//Altera o PV maximo do personagem
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus INT=") != string::npos)					||
+		((*message.text).find("/dom INT=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot INT=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.INT.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus SAB=") != string::npos)					||
+		((*message.text).find("/dom SAB=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot SAB=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.SAB.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus CAR=") != string::npos)					||
+		((*message.text).find("/dom CAR=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot CAR=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.CAR.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus FOR(mod)=") != string::npos)					||
+		((*message.text).find("/dom FOR(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot FOR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.FOR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus DES(mod)=") != string::npos)					||
+		((*message.text).find("/dom DES(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot DES(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.DES.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus CON(mod)=") != string::npos)					||
+		((*message.text).find("/dom CON(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot CON(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.CON.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus INT(mod)=") != string::npos)					||
+		((*message.text).find("/dom INT(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot INT(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.INT.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus SAB(mod)=") != string::npos)					||
+		((*message.text).find("/dom SAB(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot SAB(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.SAB.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+   	  if(
+		((*message.text).find("/dominnus CAR(mod)=") != string::npos)					||
+		((*message.text).find("/dom CAR(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot CAR(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.CAR.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+	  if(
+		((*message.text).find("/melliandre Armadura=") != string::npos)						||
+		((*message.text).find("/mel Armadura=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot Armadura=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.Armadura.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+	  if(
+		((*message.text).find("/melliandre Armadura(mod)=") != string::npos)					||
+		((*message.text).find("/mel Armadura(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot Armadura(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.Armadura.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+	  if(
+		((*message.text).find("/hyggorth Armadura=") != string::npos)						||
+		((*message.text).find("/hyg Armadura=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot Armadura=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.Armadura.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+	  if(
+		((*message.text).find("/hyggorth Armadura(mod)=") != string::npos)						||
+		((*message.text).find("/hyg Armadura(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot Armadura(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.Armadura.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+	  if(
+		((*message.text).find("/violetta Armadura=") != string::npos)						||
+		((*message.text).find("/vio Armadura=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot Armadura=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.Armadura.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+	  if(
+		((*message.text).find("/violetta Armadura(mod)=") != string::npos)						||
+		((*message.text).find("/vio Armadura(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot Armadura(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.Armadura.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+	  if(
+		((*message.text).find("/dominnus Armadura=") != string::npos)						||
+		((*message.text).find("/dom Armadura=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot Armadura=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.Armadura.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+	  if(
+		((*message.text).find("/dominnus Armadura(mod)=") != string::npos)						||
+		((*message.text).find("/dom Armadura(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot Armadura(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.Armadura.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+	  if(
+		((*message.text).find("/melliandre Dano=") != string::npos)						||
+		((*message.text).find("/mel Dano=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot Dano=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.Dano.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+	  if(
+		((*message.text).find("/melliandre Dano(mod)=") != string::npos)					||
+		((*message.text).find("/mel Dano(mod)=") != string::npos)							||
+		((*message.text).find("/melliandre@dungeon_worldbot Dano(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Melliandre.Dano.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Melliandre);
+			}				
+    	}
+	  if(
+		((*message.text).find("/hyggorth Dano=") != string::npos)						||
+		((*message.text).find("/hyg Dano=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot Dano=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.Dano.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+	  if(
+		((*message.text).find("/hyggorth Dano(mod)=") != string::npos)						||
+		((*message.text).find("/hyg Dano(mod)=") != string::npos)							||
+		((*message.text).find("/hyggorth@dungeon_worldbot Dano(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Hyggorth.Dano.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Hyggorth);
+			}				
+    	}
+	  if(
+		((*message.text).find("/violetta Dano=") != string::npos)						||
+		((*message.text).find("/vio Dano=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot Dano=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.Dano.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+	  if(
+		((*message.text).find("/violetta Dano(mod)=") != string::npos)						||
+		((*message.text).find("/vio Dano(mod)=") != string::npos)							||
+		((*message.text).find("/violetta@dungeon_worldbot Dano(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Violetta.Dano.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Violetta);
+			}				
+    	}
+	  if(
+		((*message.text).find("/dominnus Dano=") != string::npos)						||
+		((*message.text).find("/dom Dano=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot Dano=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.Dano.set(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+	  if(
+		((*message.text).find("/dominnus Dano(mod)=") != string::npos)						||
+		((*message.text).find("/dom Dano(mod)=") != string::npos)							||
+		((*message.text).find("/dominnus@dungeon_worldbot Dano(mod)=") != string::npos)
+		)
+		{
+			if(getNumero(*message.text) == _ERRO_NUMERO)
+				sender.send_message(message.chat.id,"Digite algo no formato:\n\n/personagem STAT(mod)=\nNúmero(apenas digitos)\n");
+			else
+			{
+				Dominnus.Dano.setMod(getNumero(*message.text));
+				sender.send_message(message.chat.id,"stats alterado\n");
+				salvarPersonagem(Dominnus);
+			}				
+    	}
+
+
+
 
 	//---------------------------------------------------------------------------------------------------------------------------//
 
@@ -1087,6 +2232,8 @@ void salvarPersonagem (Personagem& personagem)
 	personagem.INT.serialize(arquivo);
 	personagem.SAB.serialize(arquivo);
 	personagem.CAR.serialize(arquivo);
+	personagem.Ouro.serialize(arquivo);
+
 	personagem.equipamento.serialize(arquivo);
 
 	arquivo.close();
@@ -1111,6 +2258,8 @@ int carregarPersonagem (Personagem& personagem)
 		personagem.INT.deserialize(arquivo);
 		personagem.SAB.deserialize(arquivo);
 		personagem.CAR.deserialize(arquivo);
+		personagem.Ouro.deserialize(arquivo);
+
 		personagem.equipamento.deserialize(arquivo);
 
 		arquivo.close();
@@ -1128,14 +2277,15 @@ void setStatusInicial(Personagem& personagem)	//Funcao bem especifica para este 
 		personagem.Armadura.set(0).setMax(0).setMod(0);
 		personagem.Dano.set(6).setMax(0).setMod(0);
 		personagem.Nivel.set(1).setMax(0).setMod(0);
-		personagem.XP.set(1).setMax(0).setMod(0);
-		personagem.Carga.set(5).setMax(18).setMod(0);
+		personagem.XP.set(0).setMax(0).setMod(0);
+		personagem.Carga.set(0).setMax(18).setMod(0);
 		personagem.FOR.set(9).setMax(0).setMod(0);
 		personagem.DES.set(13).setMax(0).setMod(1);
 		personagem.CON.set(12).setMax(0).setMod(0);
 		personagem.INT.set(8).setMax(0).setMod(-1);
 		personagem.SAB.set(15).setMax(0).setMod(1);
 		personagem.CAR.set(16).setMax(0).setMod(2);
+		personagem.Ouro.set(0).setMax(0).setMod(0);
 
 		cout << "Personagem " + personagem.getNome() + " inicializado!" << endl;		
 	}	
@@ -1145,14 +2295,15 @@ void setStatusInicial(Personagem& personagem)	//Funcao bem especifica para este 
 		personagem.Armadura.set(1).setMax(0).setMod(0);
 		personagem.Dano.set(6).setMax(0).setMod(0);
 		personagem.Nivel.set(1).setMax(0).setMod(0);
-		personagem.XP.set(1).setMax(0).setMod(0);
-		personagem.Carga.set(3).setMax(21).setMod(0);
+		personagem.XP.set(0).setMax(0).setMod(0);
+		personagem.Carga.set(0).setMax(21).setMod(0);
 		personagem.FOR.set(15).setMax(0).setMod(1);
 		personagem.DES.set(8).setMax(0).setMod(-1);
 		personagem.CON.set(12).setMax(0).setMod(0);
 		personagem.INT.set(9).setMax(0).setMod(0);
 		personagem.SAB.set(16).setMax(0).setMod(2);
 		personagem.CAR.set(13).setMax(0).setMod(1);
+		personagem.Ouro.set(0).setMax(0).setMod(0);
 
 		cout << "Personagem " + personagem.getNome() + " inicializado!" << endl;		
 	}
@@ -1162,14 +2313,15 @@ void setStatusInicial(Personagem& personagem)	//Funcao bem especifica para este 
 		personagem.Armadura.set(0).setMax(0).setMod(0);
 		personagem.Dano.set(4).setMax(0).setMod(0);
 		personagem.Nivel.set(1).setMax(0).setMod(0);
-		personagem.XP.set(1).setMax(0).setMod(0);
-		personagem.Carga.set(6).setMax(16).setMod(0);
+		personagem.XP.set(0).setMax(0).setMod(0);
+		personagem.Carga.set(0).setMax(16).setMod(0);
 		personagem.FOR.set(9).setMax(0).setMod(0);
 		personagem.DES.set(8).setMax(0).setMod(-1);
 		personagem.CON.set(13).setMax(0).setMod(1);
 		personagem.INT.set(16).setMax(0).setMod(2);
 		personagem.SAB.set(15).setMax(0).setMod(1);
 		personagem.CAR.set(12).setMax(0).setMod(0);
+		personagem.Ouro.set(0).setMax(0).setMod(0);
 
 		cout << "Personagem " + personagem.getNome() + " inicializado!" << endl;		
 	}
@@ -1179,14 +2331,15 @@ void setStatusInicial(Personagem& personagem)	//Funcao bem especifica para este 
 		personagem.Armadura.set(2).setMax(0).setMod(0);
 		personagem.Dano.set(10).setMax(0).setMod(1);
 		personagem.Nivel.set(1).setMax(0).setMod(0);
-		personagem.XP.set(1).setMax(0).setMod(0);
-		personagem.Carga.set(6).setMax(28).setMod(0);
+		personagem.XP.set(0).setMax(0).setMod(0);
+		personagem.Carga.set(0).setMax(28).setMod(0);
 		personagem.FOR.set(16).setMax(0).setMod(2);
 		personagem.DES.set(9).setMax(0).setMod(0);
 		personagem.CON.set(15).setMax(0).setMod(1);
 		personagem.INT.set(8).setMax(0).setMod(-1);
 		personagem.SAB.set(12).setMax(0).setMod(0);
 		personagem.CAR.set(13).setMax(0).setMod(1);
+		personagem.Ouro.set(0).setMax(0).setMod(0);
 
 		cout << "Personagem " + personagem.getNome() + " inicializado!" << endl;		
 	}	
@@ -1196,26 +2349,29 @@ inline int getNumero(string menssagem)
 {
 	string valor;
 	int numero;
+	size_t achei = menssagem.find("\n");		//Encontro o primeiro pula-linha
 
-	valor = menssagem.substr		//Pega ultimo caracter da string
-			(
-				menssagem.size()-1,
-				menssagem.size()
-			);	
+	if (achei==string::npos)
+    	return _ERRO_NUMERO;								//Nao encontrei
+		
+	menssagem.replace(0,achei+1,"");			//Apago a menssagem que nao interessa
+
+	valor = menssagem;							//Separo o nome do numero
+
 	try{
-		numero = stoi(valor);			//Transforma para inteiro
+		numero = stoi(valor);					//Transforma para inteiro
 	}
 	catch(std::invalid_argument& e){
-		return -1;
+		return _ERRO_NUMERO;
 	}
 	catch(...){
-		return -1;
+		return _ERRO_NUMERO;
 	}
-
+	
 	return numero;
 }
 
-inline int getTextoEquip(string menssagem,string& equipamento,int& peso,string& descricao)				
+inline int getTextoEquip(string menssagem,string& equipamento,int& peso,int& quantidade,string& descricao)				
 {
 	size_t achei = menssagem.find("\n");		//Encontro o primeiro pula-linha
 	descricao = "";
@@ -1235,20 +2391,20 @@ inline int getTextoEquip(string menssagem,string& equipamento,int& peso,string& 
 				0,
 				(int)achei
 			);
-
+	
 	menssagem.replace(0,achei+1,"");				//Apago nome do equipamento
-
+	
 	achei = menssagem.find("\n");				//Encontro o terceiro pulalinha
-
+	
 	if (achei==string::npos)
     	return -1;
-
+	
 	string numero = menssagem.substr			//Separo o peso do equipamento
 			(
 				0,
 				(int)achei
 			);
-
+	
 	try{
 		peso = stoi(numero);					//Transforma para inteiro
 	}
@@ -1260,7 +2416,30 @@ inline int getTextoEquip(string menssagem,string& equipamento,int& peso,string& 
 	}
 
 	menssagem.replace(0,achei+1,"");				//Apago peso do equipamento
-				
+
+	achei = menssagem.find("\n");				//Encontro o quarto pulalinha
+	
+	if (achei==string::npos)
+    	return -1;
+	
+	numero = menssagem.substr					//Separo a quantidade
+			(
+				0,
+				(int)achei
+			);
+	
+	try{
+		quantidade = stoi(numero);					//Transforma para inteiro
+	}
+	catch(std::invalid_argument& e){
+		return -1;
+	}
+	catch(...){
+		return -1;
+	}
+
+	menssagem.replace(0,achei+1,"");
+
 	descricao = menssagem.substr				//Separo a descricao equipamento
 			(
 				0,
@@ -1282,18 +2461,3 @@ inline int getTextoEquip(string menssagem,string& equipamento)
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
