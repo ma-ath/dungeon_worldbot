@@ -7,8 +7,8 @@
 #define _DEV			//Seta o bot no modo de desenvolvimento. Assim, o bot que responde é o bot de desenvolvimento
 
 const string _CARACTER_DE_ESPACO("澱");
-const string _BOT_TOKEN("542711812:AAE51OjKUSU1y1-Gc37gsBno7MezXf7E1mI");
-const string _DEV_TOKEN("492800369:AAH8nOKTMmHjy8Q9zt5SQ-aCzGdCnFn8UTQ");
+const string _BOT_TOKEN("*****");
+const string _DEV_TOKEN("*****");
 const int 	 _ERRO_NUMERO = -17237882;		//Um numero qualquer
 
 using namespace std;
